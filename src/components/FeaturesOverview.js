@@ -1,94 +1,83 @@
-// src/components/FeaturesOverview.js
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView 
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import GlobalStyles from '../styles/GlobalStyles';
+import { useNavigation } from '@react-navigation/native';
 import Colors from '../constants/Colorss';
 
-const FeatureItem = ({ icon, title, description }) => (
-  <View 
-    style={styles.featureItem}
-    accessibilityRole="button"
-    accessibilityLabel={`${title} Feature: ${description}`}
-  >
-    <Icon 
-      name={icon} 
-      size={50} 
-      color={Colors.primary} 
-      style={styles.featureIcon}
-    />
-    <Text style={styles.featureTitle}>{title}</Text>
-    <Text style={styles.featureDescription}>{description}</Text>
-  </View>
-);
+const FeatureItem = ({ icon, title, description, screen }) => {
+  const navigation = useNavigation();
+  return (
+    <TouchableOpacity 
+      style={styles.featureItem} 
+      onPress={() => navigation.navigate(screen)}
+    >
+      <Icon name={icon} size={50} color={Colors.primary} style={styles.featureIcon} />
+      <Text style={styles.featureTitle}>{title}</Text>
+      <Text style={styles.featureDescription}>{description}</Text>
+    </TouchableOpacity>
+  );
+};
 
-const FeaturesOverview = ({ navigation }) => {
+const FeaturesOverview = () => {
   const features = [
     {
-      icon: 'visibility',
-      title: 'AI-Powered Screen Reader',
-      description: 'Converts text to speech for visually impaired users'
-    },
-    {
-      icon: 'text-format',
-      title: 'Braille Translator',
-      description: 'Translates digital text into Braille format'
-    },
-    {
-      icon: 'camera-alt',
-      title: 'AI Object Recognition',
-      description: 'Identifies objects and surroundings via camera input'
-    },
-    {
-      icon: 'memory',
-      title: 'Brain-Computer Interface',
-      description: 'Enables communication through brain signals'
-    },
-    {
       icon: 'record-voice-over',
-      title: 'Real-Time Voice Assistance',
-      description: 'Helps users interact with digital world effortlessly'
+      title: 'Speech to Text',
+      description: 'Converts speech into written text.',
+      screen: 'SpeechToText'
+    },
+    {
+      icon: 'hearing',
+      title: 'Text to Speech',
+      description: 'Reads out text for better accessibility.',
+      screen: 'TextToSpeech'
+    },
+    {
+      icon: 'navigation',
+      title: 'Navigation Assistance',
+      description: 'Helps users with movement guidance.',
+      screen: 'NavigationAssistance'
+    },
+    {
+      icon: 'visibility',
+      title: 'Visual Challenges Assistance',
+      description: 'Supports users with visual impairments.',
+      screen: 'VisualChallenging'
+    },
+    {
+      icon: 'psychology',
+      title: 'Brain-Computer Interface',
+      description: 'Communication through brain signals.',
+      screen: 'BCICommunication'
+    },
+    {
+      icon: 'school',
+      title: 'Learning Challenges',
+      description: 'Assistive tech for learning disabilities.',
+      screen: 'LearningChallenges'
+    },
+    {
+      icon: 'emergency',
+      title: 'Emergency Support',
+      description: 'Quick help for emergency situations.',
+      screen: 'EmergencySupportScreen'
     }
   ];
 
   return (
     <View style={styles.container}>
-      <Text 
-        style={styles.sectionTitle}
-        accessibilityRole="header"
-      >
-        Our Core Features
-      </Text>
-      
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.featuresContainer}
-      >
+      <Text style={styles.sectionTitle}>Assistive AI Features</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuresContainer}>
         {features.map((feature, index) => (
           <FeatureItem 
             key={index}
             icon={feature.icon}
             title={feature.title}
             description={feature.description}
+            screen={feature.screen}
           />
         ))}
       </ScrollView>
-      
-      <TouchableOpacity 
-        style={GlobalStyles.button}
-        onPress={() => navigation.navigate('FeaturesDetail')}
-        accessibilityRole="button"
-        accessibilityLabel="Learn More About Our Assistive AI"
-      >
-        <Text style={GlobalStyles.buttonText}>Learn More About Our Assistive AI</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -99,7 +88,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   sectionTitle: {
-    ...GlobalStyles.largeText,
+    fontSize: 22,
+    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -119,14 +109,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   featureTitle: {
-    ...GlobalStyles.accessibleText,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
   },
   featureDescription: {
-    ...GlobalStyles.accessibleText,
-    textAlign: 'center',
     fontSize: 14,
+    textAlign: 'center',
   },
 });
 
