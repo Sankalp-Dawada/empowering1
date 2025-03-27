@@ -1,66 +1,74 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-react-native';
 import * as mobilenet from '@tensorflow-models/mobilenet';
-import Tesseract from 'tesseract.js';
-import { fetch } from '@tensorflow/tfjs-react-native';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { decodeJpeg } from '@tensorflow/tfjs-react-native';
+import Tts from 'react-native-tts';
 
-// Load models once
 let objectDetectionModel = null;
 
 export const useAIVisionService = () => {
-  
-  // Load Object Detection Model (Mobile Compatible)
-  const loadObjectDetectionModel = async () => {
-    await tf.ready();  // Ensure TensorFlow is initialized
-    if (!objectDetectionModel) {
-      objectDetectionModel = await mobilenet.load();
-    }
-  };
 
-  // Object Detection (React Native Compatible)
-  const detectObjects = async (imageUri) => {
-    if (!imageUri) return console.error("❌ No image provided!");
+    const loadObjectDetectionModel = async () => {
+        try {
+            await tf.ready();
+            if (!objectDetectionModel) {
+                objectDetectionModel = await mobilenet.load();
+                console.log("✅ Model loaded successfully!");
+            }
+        } catch (error) {
+            console.error("⚠️ Error loading model:", error);
+        }
+    };
 
-    try {
-      await loadObjectDetectionModel();
+    const detectObjects = async (imageUri) => {
+        if (!imageUri) {
+            console.error("❌ No image provided!");
+            return [];
+        }
 
-      const response = await fetch(imageUri);
-      const imageData = await response.arrayBuffer();
-      const imageTensor = tf.node.decodeImage(new Uint8Array(imageData));
+        try {
+            await loadObjectDetectionModel();
 
-      const predictions = await objectDetectionModel.classify(imageTensor);
-      console.log('🔍 Detected Objects:', predictions);
+            // 🛠️ Resize image to 224x224 (MobileNet requirement)
+            const resizedImage = await ImageManipulator.manipulateAsync(
+                imageUri,
+                [{ resize: { width: 224, height: 224 } }],
+                { base64: true }
+            );
 
-      tf.dispose(imageTensor); // Free memory
-      return predictions;
-    } catch (error) {
-      console.error("⚠️ Object detection failed:", error);
-      return null;
-    }
-  };
+            const response = await fetch(resizedImage.uri);
+            const imageData = await response.arrayBuffer();
+            const imageTensor = decodeJpeg(new Uint8Array(imageData));
 
-  // Text Recognition (OCR)
-  const readText = async (imageUri) => {
-    if (!imageUri) return console.error("❌ No image provided!");
+            // 🚀 Perform Object Detection
+            const predictions = await objectDetectionModel.classify(imageTensor);
 
-    try {
-      const { data: { text } } = await Tesseract.recognize(imageUri, 'eng', {
-        logger: (m) => console.log(m),  // Logs progress
-      });
+            console.log('🔍 Detected Objects:', predictions);
 
-      console.log('📝 Extracted Text:', text);
-      return text;
-    } catch (error) {
-      console.error("⚠️ OCR failed:", error);
-      return null;
-    }
-  };
+            // 🎯 Filter low-confidence predictions (below 30%)
+            const filteredPredictions = predictions.filter(p => p.probability > 0.3);
 
-  // Color Recognition (Placeholder)
-  const identifyColors = async (imageUri) => {
-    console.log('🎨 Color Recognition is not implemented yet.');
-    return "Feature Coming Soon!";
-  };
+            if (filteredPredictions.length > 0) {
+                const detectedObjects = filteredPredictions.map(p =>
+                    `${p.className} (${Math.round(p.probability * 100)}%)`
+                ).join(', ');
 
-  return { detectObjects, readText, identifyColors };
+                Tts.speak(`Detected: ${detectedObjects}`);
+            } else {
+                Tts.speak('No high-confidence objects detected.');
+            }
+
+            // 🔥 Dispose tensor to free memory
+            tf.dispose(imageTensor);
+
+            return filteredPredictions;
+
+        } catch (error) {
+            console.error("⚠️ Object detection failed:", error);
+            return [];
+        }
+    };
+
+    return { detectObjects };
 };
