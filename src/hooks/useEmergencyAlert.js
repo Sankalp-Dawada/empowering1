@@ -1,12 +1,11 @@
+// useEmergencyAlert.js
 import { useState } from 'react';
 import * as Location from 'expo-location';
 import * as SMS from 'expo-sms';
 import { Alert, Linking } from 'react-native';
 
 export const useEmergencyAlert = () => {
-  const [emergencyContacts, setEmergencyContacts] = useState([
-    { name: 'Primary Contact', phone: '+1234567890' }
-  ]);
+  const [emergencyContacts, setEmergencyContacts] = useState([]);
 
   const getCurrentLocation = async () => {
     try {
@@ -29,6 +28,8 @@ export const useEmergencyAlert = () => {
   const triggerEmergencyAlert = async (options = {}) => {
     try {
       const location = options.location ? await getCurrentLocation() : null;
+
+      // Iterate over the emergencyContacts list and send SMS
       emergencyContacts.forEach(contact => {
         const message = `🚨 EMERGENCY ALERT 🚨\n${options.message || 'Need Immediate Help'}\n${
           location ? `📍 Location: https://www.google.com/maps?q=${location.latitude},${location.longitude}` : ''
@@ -36,7 +37,7 @@ export const useEmergencyAlert = () => {
         sendSMS(contact.phone, message);
       });
 
-      // Optional Emergency Call
+      // Optional: trigger an emergency call (e.g., 911)
       try {
         Linking.openURL('tel:911');
       } catch (error) {
